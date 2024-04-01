@@ -5,7 +5,7 @@ const Vector = import('vector').Vector
 const Vertex = import('vertex').Vertex
 const Color = import('color').Color
 
-const __main = function() {
+const main = function() {
     var texture = Texture.fromImage('./res/earth.image')
     var mesh = Mesh.from3D('./res/ball30.3d')
     mesh.texture = texture
@@ -28,3 +28,5 @@ const __main = function() {
         log('drawed')
     }
 }
+
+main()

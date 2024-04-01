@@ -1,0 +1,66 @@
+con Vector = import('vector').Vector
+con Color = import('color').Color
+con Vertex = import('vertex').Vertex
+con Texture = import('texture').Texture
+
+
+con Mesh = class()  {
+    con new = function(vertices: Vertex[], indices: long[]) {
+        var this.position = Vector.new(0, 0, 0)
+        var this.rotation = Vector.new(0, 0, 0)
+        var this.scale = Vector.new(1, 1, 1)
+        var this.vertices = vertices
+        var this.indices = indices
+        var this.texture = Texture.new([], 0, 0, [])
+    }
+
+    con class.from3D = function(path: String) {
+        var lines = binFromFile(path).split('\n')
+
+        var verticesInfo = lines[2]
+        var numberOfVertices = int(verticesInfo.split(' ')[1])
+        // log('numberOfVertices: ', numberOfVertices)
+        var trianglesInfo = lines[3]
+        var numberOfTriangles = int(trianglesInfo.split(' ')[1])
+        // log('numberOfTriangles: ', numberOfTriangles)
+
+        var vertices: Vertex[numberOfVertices] = []
+        for (var i = 0; i < numberOfVertices; i += 1) {
+            var line = lines[4+i]
+            var items = line.split(' ')
+
+            var position = items.cut(0, 3)
+            var x = float(position[0])
+            var y = float(position[1])
+            var z = float(position[2])
+            var p = Vector.new(x, y, z)
+
+            var normal = items.cut(3, 6)
+            var nx = float(normal[0])
+            var ny = float(normal[1])
+            var nz = float(normal[2])
+            var n = Vector.new(nx, ny, nz)
+
+            var uv = items.cut(6, 8)
+            var u = float(uv[0])
+            var v = float(uv[1])
+
+            // var c = Color.randomColor()
+            var c = Color.white()
+
+            var vertex = Vertex.new(p, c, n, u, v)
+            vertices[i] = vertex
+        }
+
+        var indices: long[numberOfTriangles * 3] = []
+        for (var i = 0; i < numberOfTriangles; i += 1) {
+            var line = lines[4+i+numberOfVertices]
+            var t = line.split(' ')
+            indices[i*3+0] = int(t[0])
+            indices[i*3+1] = int(t[1])
+            indices[i*3+2] = int(t[2])
+        }
+
+        return Mesh.new(vertices, indices)
+    }
+}

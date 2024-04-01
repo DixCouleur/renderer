@@ -1,0 +1,156 @@
+con Vector = import('vector').Vector
+
+con Matrix = class() {
+    con new = function(matrixList: ArrayStatic<float>) {
+        var this.m = matrixList
+        if(matrixList == null) {
+            var m: float[16] = []
+            this.m = m
+        }
+    }
+
+    con mul = function(other: Matrix) {
+        var m1 = this.m
+        var m2 = other.m
+        var m: float[16] = []
+
+        var index = 0
+        while (index < 16) {
+            var i = index >> 2
+            var j = index % 4
+            m[i*4+j] = 
+              m1[i*4+0] * m2[0*4+j]
+            + m1[i*4+1] * m2[1*4+j]
+            + m1[i*4+2] * m2[2*4+j]
+            + m1[i*4+3] * m2[3*4+j]
+            index += 1
+        }
+    
+        return Matrix.new(m)
+    }
+
+    con class.zero = function() {
+        return class.new(null)
+    }
+
+    con class.identity = function() {
+        var m: float[16] = [
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        ]
+        return class.new(m)
+    }
+
+    con class.lookAtLH = function(eye: Vector, target: Vector, up: Vector) {
+        var zaxis = target.sub(eye).normalize()
+        var xaxis = up.cross(zaxis).normalize()
+        var yaxis = zaxis.cross(xaxis).normalize()
+
+        var ex = -xaxis.dot(eye)
+        var ey = -yaxis.dot(eye)
+        var ez = -zaxis.dot(eye)
+
+        var m: float[16] = [
+            xaxis.x, yaxis.x, zaxis.x, 0,
+            xaxis.y, yaxis.y, zaxis.y, 0,
+            xaxis.z, yaxis.z, zaxis.z, 0,
+            ex, ey, ez, 1,
+        ]
+        return Matrix.new(m)
+    }
+
+    con class.perspectiveFovLH = function(fieldOfView: float, aspect: float, znear: float, zfar: float) {
+        var h = 1 / math.tan(fieldOfView / 2)
+        var w = h / aspect
+        var m: float[16] = [
+            w, 0, 0, 0,
+            0, h, 0, 0,
+            0, 0, zfar / (zfar - znear), 1,
+            0, 0, (znear * zfar) / (znear - zfar), 0,
+        ]
+        return Matrix.new(m)
+    }
+
+    con class.rotationX = function(angle: float) {
+        var s = math.sin(angle)
+        var c = math.cos(angle)
+        var m: float[16] = [
+            1, 0,  0, 0,
+            0, c,  s, 0,
+            0, -s, c, 0,
+            0, 0,  0, 1,
+        ]
+        return Matrix.new(m)
+    }
+
+    con class.rotationY = function(angle: float) {
+        var s = math.sin(angle)
+        var c = math.cos(angle)
+        var m: float[16] = [
+            c, 0, -s, 0,
+            0, 1, 0,  0,
+            s, 0, c,  0,
+            0, 0, 0,  1,
+        ]
+        return Matrix.new(m)
+    }
+
+    con class.rotationZ = function(angle:float) {
+        var s = math.sin(angle)
+        var c = math.cos(angle)
+        var m: float[16] = [
+            c,  s, 0, 0,
+            -s, c, 0, 0,
+            0,  0, 1, 0,
+            0,  0, 0, 1,
+        ]
+        return Matrix.new(m)
+    }
+
+    con class.rotation = function(angle: Vector) {
+        var x = Matrix.rotationZ(angle.z)
+        var y = Matrix.rotationX(angle.x)
+        var z = Matrix.rotationY(angle.y)
+        return x.mul(y).mul(z)
+    }
+
+    con class.translation = function(v: Vector) {
+        var x = v.x
+        var y = v.y
+        var z = v.z
+
+        var m: float[16] = [
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            x, y, z, 1,
+        ]
+        return Matrix.new(m)
+    }
+
+    con class.scale = function(v: Vector) {
+        var x = v.x
+        var y = v.y
+        var z = v.z
+
+        var m: float[16] = [
+            x, 0, 0, 0,
+            0, y, 0, 0,
+            0, 0, z, 0,
+            0, 0, 0, 1,
+        ]
+        return Matrix.new(m)
+    }
+
+    con transform = function(v: Vector) {
+        var m = this.m
+        var x = v.x * m[0] + v.y * m[1*4+0] + v.z * m[2*4+0] + m[3*4+0]
+        var y = v.x * m[1] + v.y * m[1*4+1] + v.z * m[2*4+1] + m[3*4+1]
+        var z = v.x * m[2] + v.y * m[1*4+2] + v.z * m[2*4+2] + m[3*4+2]
+        var w = v.x * m[3] + v.y * m[1*4+3] + v.z * m[2*4+3] + m[3*4+3]
+
+        return Vector.new(x / w, y / w, z / w)
+    }
+}

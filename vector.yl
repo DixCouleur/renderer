@@ -1,0 +1,54 @@
+con Vector = class() {
+    con new = function(x:float, y:float, z:float) {
+        var this.x = x
+        var this.y = y
+        var this.z = z
+    }
+
+    con add = function(v:Vector) {
+        var x = this.x + v.x
+        var y = this.y + v.y
+        var z = this.z + v.z
+        return Vector.new(x, y, z)
+    }
+
+    con sub = function(v:Vector) {
+        var x = this.x - v.x
+        var y = this.y - v.y
+        var z = this.z - v.z
+        return Vector.new(x, y, z)
+    }
+
+    con mul = function(n:float) {
+        return Vector.new(this.x * n, this.y * n, this.z * n)
+    }
+
+    con equal = function(v:Vector) {
+        return this.x == v.x and this.y == v.y and this.z == v.z
+    }
+
+    con normalize = function() {
+        var l = this.length()
+        if (l == 0) {
+            return this
+        }
+        var factor = 1 / l
+
+        return this.mul(factor)
+    }
+
+    con length = function() {
+        return math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z)
+    }
+
+    con dot = function(v:Vector) {
+        return this.x * v.x + this.y * v.y + this.z * v.z
+    }
+
+    con cross = function(v:Vector) {
+        var x = this.y * v.z - this.z * v.y
+        var y = this.z * v.x - this.x * v.z
+        var z = this.x * v.y - this.y * v.x
+        return Vector.new(x, y, z)
+    }
+}

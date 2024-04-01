@@ -1,0 +1,68 @@
+con Color = class() {
+    con new = function(r: long, g: long, b: long, a: long) {
+        var this.r = r
+        var this.g = g
+        var this.b = b
+        var this.a = a
+    }
+    con class.fromInt = function(n: long) {
+        var r = (n >> 24) & 255
+        var g = (n >> 16) & 255
+        var b = (n >> 8) & 255
+        var a = (n >> 0) & 255
+
+        return class.new(r, g, b, a)
+    }
+    con add = function(c: Color) {
+        return Color.new(
+            this.r + c.r,
+            this.g + c.g, 
+            this.b + c.b,
+            this.a + c.a,
+        )
+    }
+    con sub = function(c: Color) {
+        return Color.new(
+            this.r - c.r,
+            this.g - c.g, 
+            this.b - c.b,
+            this.a - c.a,
+        )
+    }
+    con mul = function(n: long) {
+        return Color.new(
+            this.r * n,
+            this.g * n,
+            this.b * n,
+            this.a * n,
+        )
+    }
+
+    con equal = function(c: Color) {
+        return this.r == c.r and this.g == c.g and this.b == c.b and this.a == c.a
+    }
+
+    con class.black = function() {
+        return class.new(0, 0, 0, 255)
+    }
+
+    con class.white = function() {
+        return class.new(255, 255, 255, 255)
+    }
+
+    con class.transparent = function() {
+        return class.new(0, 0, 0, 0)
+    }
+
+    con class.red = function() {
+        return class.new(255, 0, 0, 255)
+    }
+
+    con class.green = function() {
+        return class.new(0, 255, 0, 255)
+    }
+
+    con class.blue = function() {
+        return class.new(0, 0, 255, 255)
+    }
+}

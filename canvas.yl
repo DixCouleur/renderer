@@ -1,0 +1,191 @@
+con Vector = import('vector').Vector
+con Color = import('color').Color
+con Texture = import('texture').Texture
+con Mesh = import('mesh').Mesh
+con Vertex = import('vertex').Vertex
+con Matrix = import('matrix').Matrix
+
+con Camera = class() {
+    con new = function() {
+        var this.position = Vector.new(0, 0, -10)
+        var this.target = Vector.new(0, 0, 0)
+        var this.up = Vector.new(0, 1, 0)
+    }
+}
+
+con Canvas = class() {
+    con new = function(width: long, height: long) {
+        var this.w = width
+        var this.h = height
+
+        var this.camera = Camera.new()
+
+        // init zBuffer
+        var zBuffer: float[width * height] = []
+        var this.zBuffer = zBuffer
+    }
+
+    con _resetZBuffer = function() {
+        var w = this.w
+        var h = this.h
+
+        for (var i = 0; i < w * h; i += 1) {
+            this.zBuffer[i] = 10000.0
+        }
+    }
+
+    con drawPixel = function(point: Vector, color: Color) {
+        var w = this.w
+        var h = this.h
+        var x: float = math.floor(point.x)
+        var y: float = math.floor(point.y)
+        var z = point.z
+
+        if (x < 0 or x >= w or y < 0 or y >= h) {
+            return
+        }
+
+        var index = math.floor(y * w + x)
+        if (this.zBuffer[index] != 10000.0) {
+            var depth: float = this.zBuffer[index]
+            if (depth < z) {
+                return
+            }
+        }
+
+        // skip invisible
+        if (color.a == 0) {
+            return
+        }
+
+        this.zBuffer[index] = z
+        Canvas.rect(x, y, 1, 1, color.r, color.g, color.b, color.a)
+    }
+
+    con clear = function() {
+        var w = this.w
+        var h = this.h
+
+        this._resetZBuffer()
+    }
+
+    con drawScanline = function(v1: Vertex, v2: Vertex, texture: Texture) {
+        var a: Vertex = null
+        var b: Vertex = null
+        if (v1.position.x < v2.position.x) {
+            a = v1
+            b = v2
+        } else {
+            a = v2
+            b = v1
+        }
+
+        var y = a.position.y
+        var x1 = a.position.x
+        var x2 = b.position.x
+        for(var x = x1; x <= x2; x += 1.0) {
+            var factor: float = 0.0
+            if (x2 != x1) {
+                factor = (x - x1) / (x2 - x1)
+            }
+
+            var v = a.add(b.sub(a).mul(factor))
+            var p = v.position
+            var vu = v.u
+            var vv = v.v
+            var c = texture.sample(vu, vv)
+
+            this.drawPixel(Vector.new(p.x, y, p.z), c)
+        }
+    }
+
+    con drawTriangle = function(v1: Vertex, v2: Vertex, v3: Vertex, texture: Texture) {
+        var a: Vertex = v1
+        var b: Vertex = v2
+        var c: Vertex = v3
+
+        // log(a, b, c)
+        var middle: float = 0
+        if (c.position.y - a.position.y != 0) {
+            middle = (b.position.y - a.position.y) / (c.position.y - a.position.y)
+        }
+
+        var middle = a.add(c.sub(a).mul(middle))
+        var startY = a.position.y
+        var endY = b.position.y
+        for(var y = startY; y <= endY; y += 1) {
+            var factor: float = 0
+            if (endY != startY) {
+                factor = (y - startY) / (endY - startY)
+            }
+            var va = a.add(middle.sub(a).mul(factor))
+            var vb = a.add(b.sub(a).mul(factor))
+            this.drawScanline(va, vb, texture)
+        }
+        
+        startY = b.position.y
+        endY = c.position.y
+        for(var y = startY; y <= endY; y += 1) {
+            var factor: float = 0
+            if (endY != startY) {
+                factor = (y - startY) / (endY - startY)
+            }
+            var va = middle.add(c.sub(middle).mul(factor))
+            var vb = b.add(c.sub(b).mul(factor))
+            this.drawScanline(va, vb, texture)
+        }
+    }
+
+    con project = function(coordVector: Vertex, transformMatrix: Matrix) {
+        var w = this.w
+        var h = this.h
+        var w2: float = w / 2
+        var h2: float = h / 2
+
+        var point = transformMatrix.transform(coordVector.position)
+        var x = point.x * w2 + w2
+        var y = -point.y * h2 + h2
+        var z = point.z
+        var v = Vector.new(x, y, z)
+
+        var color = coordVector.color
+        var nomarl = coordVector.normal
+        var cu = coordVector.u
+        var cv = coordVector.v
+        return Vertex.new(v, color, nomarl, cu, cv)
+    }
+
+    con drawMesh = function(mesh: Mesh) {
+        var w: float = this.w
+        var h: float = this.h
+        var position = this.camera.position
+        var target = this.camera.target
+        var up = this.camera.up
+
+        con view = Matrix.lookAtLH(position, target, up)
+        con projection = Matrix.perspectiveFovLH(0.8, w / h, 0.1, 1)
+
+        con rotation = Matrix.rotation(mesh.rotation)
+        con translation = Matrix.translation(mesh.position)
+        con scale = Matrix.scale(mesh.scale)
+
+        con world = scale.mul(rotation).mul(translation)
+
+        con transform = world.mul(view).mul(projection)
+
+        for (var i = 0; i < mesh.indices.length; i += 3) {
+            var i0 = mesh.indices[i+0]
+            var i1 = mesh.indices[i+1]
+            var i2 = mesh.indices[i+2]
+            var a: Vertex = mesh.vertices[i0]
+            var b: Vertex = mesh.vertices[i1]
+            var c: Vertex = mesh.vertices[i2]
+
+            var v1 = this.project(a, transform)
+            var v2 = this.project(b, transform)
+            var v3 = this.project(c, transform)
+
+            this.drawTriangle(v1, v2, v3, mesh.texture)
+        }
+    }
+}

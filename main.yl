@@ -1,0 +1,30 @@
+const Canvas = import('canvas').Canvas
+const Texture = import('texture').Texture
+const Mesh = import('mesh').Mesh
+const Vector = import('vector').Vector
+const Vertex = import('vertex').Vertex
+const Color = import('color').Color
+
+const __main = function() {
+    var texture = Texture.fromImage('./res/earth.image')
+    var mesh = Mesh.from3D('./res/ball30.3d')
+    mesh.texture = texture
+
+    var w = 400
+    var h = 300
+    var canvas = Canvas.new(w, h)
+    while (Canvas.running()) {
+        // var s = os.clock()
+        // log('draw mesh at pos', mesh.position, mesh.rotation)
+        mesh.rotation.y += 0.1
+        Canvas.updateEvents()
+        Canvas.clear()
+        canvas.clear()
+        canvas.drawMesh(mesh)
+        Canvas.show()
+
+        // var e = os.clock()
+        // log('fps: ', 1 / (e - s))
+        log('drawed')
+    }
+}

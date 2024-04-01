@@ -1,0 +1,39 @@
+con Vector = import('vector').Vector
+con Color = import('color').Color
+
+con Vertex = class() {
+    con new = function(position: Vector, color: Color, normal: Vector, u: float, v: float) {
+        var this.position = position
+        var this.color = color
+        var this.normal = normal
+        var this.u = u
+        var this.v = v
+    }
+
+    con add = function(v: Vertex) {
+        var pos = this.position.add(v.position)
+        var color = this.color.add(v.color)
+        var normal = this.normal.add(v.normal)
+        var u1 = this.u + v.u
+        var v1 = this.v + v.v
+        return Vertex.new(pos, color, normal, u1, v1)
+    }
+
+    con sub = function(v: Vertex) {
+        var pos = this.position.sub(v.position)
+        var color = this.color.sub(v.color)
+        var normal = this.normal.sub(v.normal)
+        var u1 = this.u - v.u
+        var v1 = this.v - v.v
+        return Vertex.new(pos, color, normal, u1, v1)
+    }
+    
+    con mul = function(n: float) {
+        var pos = this.position.mul(n)
+        var color = this.color.mul(n)
+        var normal = this.normal.mul(n)
+        var u = this.u * n
+        var v = this.v * n
+        return Vertex.new(pos, color, normal, u, v)
+    }
+}

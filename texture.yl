@@ -1,0 +1,58 @@
+con Color = import('color').Color
+
+con Texture = class() {
+    con new = function(pixels: ArrayStatic<long>, width: long, height: long, data: ArrayStatic<long>) {
+        con this.pixels = pixels
+        con this.width = width
+        con this.height = height
+        con this.data = data
+    }
+
+    con class.fromImage = function(path: String) {
+        var lines = binFromFile(path).split('\n')
+        var width = int(lines[2])
+        var height = int(lines[3])
+
+        // pixels
+        var pixels: long[width * height] = []
+        for (var i = 0; i < height; i += 1) {
+            var line: String = lines[4 + i]
+            var row = line.split(' ')
+
+            for (var j = 0; j < width; j += 1) {
+                var pixel = int(row[j])
+                pixels[i * width + j] = pixel
+            }
+        }
+
+        // log('pixels: ', pixels)
+        var data: long[width * height * 4] = []
+        for (var i = 0; i < pixels.length(); i += 1) {
+            var pixel = pixels[i]
+            var c = Color.fromInt(pixel)
+            data[i*4+0] = c.r
+            data[i*4+1] = c.g
+            data[i*4+2] = c.b
+            data[i*4+3] = c.a
+        }
+
+        return Texture.new(pixels, width, height, data)
+    }
+
+    con sample = function(u: float, v: float) {
+        var width = this.width
+        var height = this.height
+
+        // log('u, v: ', u, v)
+        var tu = math.abs(math.floor(u * (width - 1)))
+        var tv = math.abs(math.floor(v * (height - 1)))
+
+        var index = math.floor(tu + tv * width)
+
+        var r = this.data[index*4+0]
+        var g = this.data[index*4+1]
+        var b = this.data[index*4+2]
+        var a = this.data[index*4+3]
+        return Color.new(r, g, b, a)
+    }
+}

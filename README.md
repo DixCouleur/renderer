@@ -1,3 +1,3 @@
 # renderer
 
-![earth](https://github.com/DixCouleur/renderer/main/scrrenshots/earth.gif)
+![earth](https://github.com/DixCouleur/renderer/blob/main/screenshots/earth.gif)
